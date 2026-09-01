@@ -429,6 +429,25 @@
         }
 
 
+    
+/* ==============================================================
+   COMPANY BRANDING / LOGO
+   ==============================================================
+
+   The company logo is displayed in the header.
+
+   The logo automatically scales to fit the header without
+   distorting its original proportions.
+
+   Recommended logo dimensions:
+
+       Height: 30–45px
+       Width:  depends on the logo's aspect ratio
+
+   SVG/WebP/PNG images are supported by the browser.
+
+   ============================================================== */
+
         .brand {
 
             display: flex;
@@ -443,8 +462,40 @@
             font-weight: 800;
 
             white-space: nowrap;
+
         }
 
+
+        /*
+        MAIN COMPANY LOGO
+
+        max-height prevents a large uploaded image from making
+        the website header unnecessarily tall.
+
+        width: auto preserves the original logo proportions.
+        */
+
+        .company-logo {
+
+            display: block;
+
+            width: auto;
+
+            height: 40px;
+
+            max-width: 180px;
+
+            object-fit: contain;
+
+        }
+
+
+        /*
+        FALLBACK BRAND MARK
+
+        This is displayed only when the company logo is not
+        configured or cannot be loaded.
+        */
 
         .brand-mark {
 
@@ -467,11 +518,17 @@
             font-size: 16px;
 
             font-weight: 800;
+
         }
 
 
-        .brand-name {
-            font-size: 17px;
+        /*
+        On desktop, the fallback mark is hidden when a valid
+        company logo is being displayed.
+        */
+
+        .brand-mark.logo-hidden {
+            display: none;
         }
 
 
@@ -1666,25 +1723,43 @@
         <div class="container header-inner">
 
 
+        
+            <!-- ============================================================
+                COMPANY LOGO
+
+                The logo is loaded from:
+
+                    WEBSITE_CONFIG.company.logo
+
+                If the configured logo cannot be loaded, the website
+                automatically falls back to the company initials.
+
+                To change the logo, edit only the "logo" value in
+                WEBSITE_CONFIG.
+
+                Example:
+
+                    logo: "images/my-company-logo.webp"
+
+                ============================================================ -->
+
             <a
                 class="brand"
                 href="#home"
                 aria-label="Homepage">
+
+                <img
+                    class="company-logo"
+                    id="companyLogo"
+                    src=""
+                    alt=""
+                >
 
                 <span
                     class="brand-mark"
                     id="brandMark">
 
                     A
-
-                </span>
-
-
-                <span
-                    class="brand-name"
-                    id="headerCompanyName">
-
-                    ABC Manufacturing
 
                 </span>
 
@@ -2364,6 +2439,9 @@
                 shortName:
                     "I",
 
+                logo:
+                    "images/IMG_20260901_130729.jpg",
+
                 description:
                     "Quality industrial products and reliable manufacturing for business customers."
 
@@ -2962,9 +3040,46 @@
         }
 
 
+        
         /* ==============================================================
-           INITIALISE COMPANY INFORMATION
-           ============================================================== */
+        INITIALISE COMPANY INFORMATION
+        ==============================================================
+
+        PURPOSE
+        -------
+        Loads company branding and company information from:
+
+            WEBSITE_CONFIG.company
+
+        COMPANY LOGO BEHAVIOUR
+        ----------------------
+
+        1. If a logo path is configured:
+        
+                logo: "images/company-logo.webp"
+
+            the image is displayed.
+
+        2. If the image cannot be loaded:
+
+            the website automatically falls back to the
+            company initials defined by:
+
+                shortName: "A"
+
+        This prevents a broken image icon from appearing in
+        the website header.
+
+        WEBSITE OWNER
+        -------------
+        Normally you only need to edit:
+
+            company.name
+            company.shortName
+            company.logo
+            company.description
+
+        ============================================================== */
 
         function initializeCompanyInformation() {
 
@@ -2972,22 +3087,131 @@
                 WEBSITE_CONFIG.company;
 
 
+            /*
+            Update browser tab title.
+            */
+
             document.title =
                 company.name +
                 " | Industrial Products";
 
 
-            document.getElementById(
-                "headerCompanyName"
-            ).textContent =
-                company.name;
+            /*
+            ----------------------------------------------------------
+            COMPANY LOGO
+            ----------------------------------------------------------
+
+            Find the logo image element in the header.
+            */
+
+            const logo =
+                document.getElementById(
+                    "companyLogo"
+                );
 
 
-            document.getElementById(
-                "brandMark"
-            ).textContent =
+            /*
+            Find the fallback initials element.
+            */
+
+            const brandMark =
+                document.getElementById(
+                    "brandMark"
+                );
+
+
+            /*
+            Set the fallback initials.
+
+            Example:
+
+                shortName: "AM"
+
+            will display:
+
+                AM
+            */
+
+            brandMark.textContent =
                 company.shortName;
 
+
+            /*
+            If the owner has not provided a logo,
+            immediately show the fallback initials.
+            */
+
+            if (!company.logo) {
+
+                logo.style.display =
+                    "none";
+
+                brandMark.classList.remove(
+                    "logo-hidden"
+                );
+
+            }
+
+            else {
+
+                /*
+                A logo path has been provided.
+
+                Try to load the image.
+                */
+
+                logo.src =
+                    company.logo;
+
+                logo.alt =
+                    company.name +
+                    " logo";
+
+
+                /*
+                Once the image successfully loads,
+                hide the fallback initials.
+                */
+
+                logo.onload =
+                    function() {
+
+                        logo.style.display =
+                            "block";
+
+                        brandMark.classList.add(
+                            "logo-hidden"
+                        );
+
+                    };
+
+
+                /*
+                If the image cannot be loaded,
+                display the fallback initials instead.
+
+                This prevents a broken-image icon appearing
+                in the header.
+                */
+
+                logo.onerror =
+                    function() {
+
+                        logo.style.display =
+                            "none";
+
+                        brandMark.classList.remove(
+                            "logo-hidden"
+                        );
+
+                    };
+
+            }
+
+
+            /*
+            Update footer company name.
+            */
 
             document.getElementById(
                 "footerCompanyName"
@@ -2995,11 +3219,19 @@
                 company.name;
 
 
+            /*
+            Update footer copyright company name.
+            */
+
             document.getElementById(
                 "footerCopyrightName"
             ).textContent =
                 company.name;
 
+
+            /*
+            Update footer company description.
+            */
 
             document.getElementById(
                 "footerDescription"
@@ -3007,12 +3239,17 @@
                 company.description;
 
 
+            /*
+            Automatically use the current year in the footer.
+            */
+
             document.getElementById(
                 "footerYear"
             ).textContent =
                 new Date().getFullYear();
 
         }
+
 
 
         /* ==============================================================

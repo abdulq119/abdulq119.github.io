@@ -725,26 +725,152 @@
 
 
         /* ==============================================================
-           COMPANY HIGHLIGHTS
+           IMAGE GALLERY — CONTINUOUS CAROUSEL
+           ==============================================================
+
+           ".gallery-track" holds three identical copies of the photo
+           set, laid out in a single flex row inside a real,
+           natively-scrollable ".gallery-carousel". JavaScript
+           (initializeGalleryCarousel()) drives a slow, continuous
+           forward auto-scroll by nudging scrollLeft every frame, and
+           whenever the visible position drifts into the leading or
+           trailing clone copy it silently jumps scrollLeft back by
+           exactly one copy's width — since every copy is identical,
+           the loop appears seamless in either direction.
+
+           Because the carousel is a genuine scroll container (not a
+           CSS transform animation), the same track also supports
+           real touch swiping and mouse-wheel scrolling on every
+           screen size, and the left/right ".gallery-arrow" buttons
+           can move it with a simple scrollBy(). Any of these — a
+           swipe, a wheel scroll, a pointer press, or focusing a tile
+           — pauses the automatic motion, which resumes a moment
+           after the interaction settles.
+
+           ACCESSIBILITY
+           -------------
+           Only the middle ("real") copy of the six tiles is reachable
+           by keyboard/screen readers. The two clone copies exist
+           purely to make the loop visually seamless, so they are
+           marked aria-hidden and removed from the tab order.
            ============================================================== */
 
-        .highlights {
+        .gallery-shell {
 
-            display: grid;
+            position: relative;
+        }
 
-            grid-template-columns:
-                repeat(3, 1fr);
+
+        .gallery-carousel {
+
+            overflow-x: auto;
+
+            overflow-y: hidden;
+
+            overscroll-behavior-x: contain;
+
+            -webkit-overflow-scrolling: touch;
+
+            touch-action: pan-x;
+
+            scrollbar-width: none;
+        }
+
+
+        .gallery-carousel::-webkit-scrollbar {
+
+            display: none;
+        }
+
+
+        .gallery-track {
+
+            display: flex;
+
+            width: max-content;
 
             gap: 20px;
         }
 
 
-        .highlight {
+        .gallery-arrow {
 
-            padding: 24px;
+            position: absolute;
+
+            top: 50%;
+
+            z-index: 5;
+
+            display: grid;
+
+            place-items: center;
+
+            width: 44px;
+
+            height: 44px;
+
+            padding: 0;
 
             background:
-                white;
+                rgba(8, 27, 45, .55);
+
+            border:
+                1px solid
+                rgba(255, 255, 255, .35);
+
+            border-radius: 50%;
+
+            color: white;
+
+            font-size: 20px;
+
+            line-height: 1;
+
+            cursor: pointer;
+
+            transform: translateY(-50%);
+
+            transition:
+                background-color .15s ease;
+        }
+
+
+        .gallery-arrow:hover,
+        .gallery-arrow:focus-visible {
+
+            background:
+                rgba(8, 27, 45, .8);
+        }
+
+
+        .gallery-arrow--prev {
+
+            left: 8px;
+        }
+
+
+        .gallery-arrow--next {
+
+            right: 8px;
+        }
+
+
+        .gallery-tile {
+
+            position: relative;
+
+            flex: 0 0 auto;
+
+            overflow: hidden;
+
+            width: 300px;
+
+            aspect-ratio: 4 / 3;
+
+            padding: 0;
+
+            background:
+                #F1F5F9;
 
             border:
                 1px solid
@@ -752,30 +878,196 @@
 
             border-radius:
                 var(--radius-medium);
+
+            box-shadow:
+                var(--shadow-small);
+
+            cursor: pointer;
         }
 
 
-        .highlight-title {
+        .gallery-tile img {
 
-            margin-bottom: 5px;
+            width: 100%;
 
-            color:
-                var(--color-primary);
+            height: 100%;
 
-            font-size: 15px;
+            object-fit: cover;
 
-            font-weight: 750;
+            transition:
+                transform .4s ease;
         }
 
 
-        .highlight-text {
+        .gallery-tile:hover img,
+        .gallery-tile:focus-visible img {
 
-            margin: 0;
+            transform: scale(1.06);
+        }
 
-            color:
-                var(--color-muted);
+
+        .gallery-tile-overlay {
+
+            position: absolute;
+
+            inset: 0;
+
+            display: flex;
+
+            align-items: flex-end;
+
+            padding: 16px;
+
+            background:
+                linear-gradient(
+                    to top,
+                    rgba(8, 27, 45, .55),
+                    rgba(8, 27, 45, 0) 45%
+                );
+
+            opacity: 0;
+
+            transition:
+                opacity .25s ease;
+        }
+
+
+        .gallery-tile:hover .gallery-tile-overlay,
+        .gallery-tile:focus-visible .gallery-tile-overlay {
+
+            opacity: 1;
+        }
+
+
+        .gallery-tile-label {
+
+            color: white;
 
             font-size: 13px;
+
+            font-weight: 650;
+        }
+
+
+        /* ==============================================================
+           GALLERY LIGHTBOX
+           ==============================================================
+
+           A single reusable modal. JavaScript swaps its image/caption
+           to match whichever gallery tile was activated.
+           ============================================================== */
+
+        .lightbox {
+
+            position: fixed;
+
+            inset: 0;
+
+            z-index: 2000;
+
+            display: none;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 30px;
+
+            background:
+                rgba(8, 27, 45, .92);
+        }
+
+
+        .lightbox.active {
+
+            display: flex;
+        }
+
+
+        .lightbox-content {
+
+            position: relative;
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            max-width: min(1100px, 100%);
+
+            max-height: 100%;
+        }
+
+
+        .lightbox-image {
+
+            max-width: 100%;
+
+            max-height: 80vh;
+
+            object-fit: contain;
+
+            border-radius:
+                var(--radius-small);
+
+            box-shadow:
+                var(--shadow-medium);
+        }
+
+
+        .lightbox-caption {
+
+            margin-top: 14px;
+
+            color:
+                #D9E7F3;
+
+            font-size: 14px;
+
+            text-align: center;
+        }
+
+
+        .lightbox-close {
+
+            position: absolute;
+
+            top: -46px;
+
+            right: 0;
+
+            width: 38px;
+
+            height: 38px;
+
+            display: grid;
+
+            place-items: center;
+
+            background:
+                rgba(255, 255, 255, .1);
+
+            border:
+                1px solid
+                rgba(255, 255, 255, .3);
+
+            border-radius: 50%;
+
+            color: white;
+
+            font-size: 18px;
+
+            line-height: 1;
+
+            cursor: pointer;
+        }
+
+
+        .lightbox-close:hover {
+
+            background:
+                rgba(255, 255, 255, .2);
         }
 
 
@@ -1571,6 +1863,12 @@
 
         @media (max-width: 1000px) {
 
+            .gallery-tile {
+
+                width: 260px;
+            }
+
+
             .product-grid {
 
                 grid-template-columns:
@@ -1637,9 +1935,56 @@
             }
 
 
-            .highlights {
+            /*
+                MOBILE GALLERY
 
-                grid-template-columns: 1fr;
+                The carousel keeps auto-scrolling on mobile too, but
+                gains snap-to-tile alignment the moment a visitor
+                starts swiping (initializeGalleryCarousel() toggles
+                ".snap-enabled" for the duration of the interaction),
+                so a manual swipe still lands cleanly on a tile
+                instead of stopping mid-image.
+            */
+
+            .gallery-carousel.snap-enabled {
+
+                scroll-snap-type: x mandatory;
+            }
+
+
+            .gallery-track {
+
+                gap: 14px;
+            }
+
+
+            .gallery-tile {
+
+                width: 78vw;
+
+                max-width: 320px;
+
+                scroll-snap-align: start;
+            }
+
+
+            .gallery-arrow {
+
+                width: 40px;
+
+                height: 40px;
+
+                font-size: 18px;
+            }
+
+
+            .lightbox-close {
+
+                top: -42px;
+
+                width: 42px;
+
+                height: 42px;
             }
 
 
@@ -1697,6 +2042,14 @@
             html {
                 scroll-behavior: auto;
             }
+
+            /*
+                The automatic scroll motion itself is driven by
+                initializeGalleryCarousel() in JavaScript, which
+                checks this same media feature and skips the
+                auto-advance step entirely — leaving the gallery
+                fully usable via swipe, wheel, or the arrow buttons.
+            */
 
         }
 
@@ -1889,70 +2242,135 @@
 
 
         <!-- ============================================================
-             06. COMPANY HIGHLIGHTS
+             06. IMAGE GALLERY
+             ============================================================
+
+             Gallery tiles are automatically generated from:
+
+                 WEBSITE_CONFIG.gallery
+
+             To add a photo, search:
+
+                 "IMAGE GALLERY DATA"
+
              ============================================================ -->
 
         <section
-            class="section section-white">
+            class="section section-white"
+            id="gallery">
 
             <div class="container">
 
-                <div class="highlights">
+
+                <div class="section-header">
+
+                    <div class="section-eyebrow">
+                        Our Work
+                    </div>
 
 
-                    <div class="highlight">
+                    <h2 class="section-title">
+                        Panels We've Built
+                    </h2>
 
-                        <div class="highlight-title">
-                            Quality Focused
+
+                    <p class="section-description">
+
+                        A look at completed panels from our workshop —
+                        built to order and engineered for reliable,
+                        long-term performance.
+
+                    </p>
+
+                </div>
+
+
+                <div class="gallery-shell">
+
+                    <button
+                        type="button"
+                        class="gallery-arrow gallery-arrow--prev"
+                        id="galleryPrev"
+                        aria-label="Scroll gallery left">
+
+                        ‹
+
+                    </button>
+
+
+                    <div
+                        class="gallery-carousel"
+                        id="galleryGrid">
+
+                        <div
+                            class="gallery-track"
+                            id="galleryTrack">
                         </div>
-
-                        <p class="highlight-text">
-
-                            Consistent manufacturing standards
-                            across every product.
-
-                        </p>
 
                     </div>
 
 
-                    <div class="highlight">
+                    <button
+                        type="button"
+                        class="gallery-arrow gallery-arrow--next"
+                        id="galleryNext"
+                        aria-label="Scroll gallery right">
 
-                        <div class="highlight-title">
-                            Reliable Supply
-                        </div>
+                        ›
 
-                        <p class="highlight-text">
-
-                            Products designed to support
-                            ongoing business requirements.
-
-                        </p>
-
-                    </div>
-
-
-                    <div class="highlight">
-
-                        <div class="highlight-title">
-                            Customer Focused
-                        </div>
-
-                        <p class="highlight-text">
-
-                            Direct communication and support
-                            for business customers.
-
-                        </p>
-
-                    </div>
-
+                    </button>
 
                 </div>
 
             </div>
 
         </section>
+
+
+        <!-- ============================================================
+             GALLERY LIGHTBOX
+
+             A single hidden modal, reused for every gallery image.
+             JavaScript updates its image/caption when a tile is
+             activated.
+             ============================================================ -->
+
+        <div
+            class="lightbox"
+            id="galleryLightbox"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Enlarged panel photo"
+            aria-hidden="true">
+
+            <div class="lightbox-content">
+
+                <button
+                    class="lightbox-close"
+                    id="lightboxClose"
+                    type="button"
+                    aria-label="Close enlarged image">
+
+                    ✕
+
+                </button>
+
+
+                <img
+                    class="lightbox-image"
+                    id="lightboxImage"
+                    src=""
+                    alt="">
+
+
+                <div
+                    class="lightbox-caption"
+                    id="lightboxCaption">
+                </div>
+
+            </div>
+
+        </div>
 
 
         <!-- ============================================================
@@ -2587,7 +3005,7 @@
                         "piece",
 
                     image:
-                        "images/IMG_20260901_130847.jpg",
+                        "images/product_catalouge/apfc_panel.jpeg",
 
                     icon:
                         "▣",
@@ -2595,6 +3013,196 @@
                     description:
                         "Smart, automated power factor correction panels designed for industrial energy efficiency."
 
+                },
+
+                {
+                    name:
+                        "PCC Panel",
+
+                    category:
+                        "Panels",
+
+                    price:
+                        120,
+
+                    unit:
+                        "piece",
+
+                    image:
+                        "images/product_catalouge/pcc_panel.jpeg",
+
+                    icon:
+                        "▣",
+
+                    description:
+                        "Centralized power control panels built to handle high-capacity electrical distribution with confidence."
+
+                },
+
+                {
+                    name:
+                        "MCC Panel",
+
+                    category:
+                        "Panels",
+
+                    price:
+                        120,
+
+                    unit:
+                        "piece",
+
+                    image:
+                        "images/product_catalouge/mcc_panel.jpeg",
+
+                    icon:
+                        "▣",
+
+                    description:
+                        "Intelligent motor control panels that bring centralized control, protection, and smooth operation to industrial motor systems."
+
+                },
+
+                {
+                    name:
+                        "Power Distribution Board",
+
+                    category:
+                        "Panels",
+
+                    price:
+                        120,
+
+                    unit:
+                        "piece",
+
+                    image:
+                        "images/product_catalouge/power_distribution_board.jpeg",
+
+                    icon:
+                        "▣",
+
+                    description:
+                        "Streamlined power distribution solutions that keep electrical networks organized, accessible, and ready for demand."
+
+                },
+
+                {
+                    name:
+                        "Junction Box",
+
+                    category:
+                        "Panels",
+
+                    price:
+                        120,
+
+                    unit:
+                        "piece",
+
+                    image:
+                        "images/product_catalouge/junction_box.jpeg",
+
+                    icon:
+                        "▣",
+
+                    description:
+                        "Compact, rugged enclosures engineered to keep electrical connections secure, protected, and neatly managed."
+
+                }
+
+
+
+            ],
+
+
+            /* ==========================================================
+               ==========================================================
+               IMAGE GALLERY DATA
+               ==========================================================
+
+               ███████████████████████████████████████████████████████
+
+               THIS IS WHERE GALLERY PHOTOS ARE ADDED.
+
+               ███████████████████████████████████████████████████████
+
+
+               HOW TO ADD A PHOTO
+               -------------------
+
+               Copy the following structure:
+
+               {
+                   image: "images/image_gallery/example.jpg",
+                   alt: "Description of the photo"
+               }
+
+
+               FIELD EXPLANATION
+               -----------------
+
+               image
+                   Path to the photo. Photos should be placed inside:
+
+                       images/image_gallery/
+
+
+               alt
+                   Description shown to screen readers and used as
+                   the lightbox caption.
+
+               ========================================================== */
+
+
+            gallery: [
+
+                {
+                    image:
+                        "images/image_gallery/panel1.jpg",
+
+                    alt:
+                        "Custom electrical panel built by Intellect Engineering — photo 1"
+                },
+
+                {
+                    image:
+                        "images/image_gallery/panel2.jpg",
+
+                    alt:
+                        "Custom electrical panel built by Intellect Engineering — photo 2"
+                },
+
+                {
+                    image:
+                        "images/image_gallery/panel3.jpg",
+
+                    alt:
+                        "Custom electrical panel built by Intellect Engineering — photo 3"
+                },
+
+                {
+                    image:
+                        "images/image_gallery/panel4.jpg",
+
+                    alt:
+                        "Custom electrical panel built by Intellect Engineering — photo 4"
+                },
+
+                {
+                    image:
+                        "images/image_gallery/panel5.jpg",
+
+                    alt:
+                        "Custom electrical panel built by Intellect Engineering — photo 5"
+                },
+
+                {
+                    image:
+                        "images/image_gallery/panel6.jpg",
+
+                    alt:
+                        "Custom electrical panel built by Intellect Engineering — photo 6"
                 }
 
             ],
@@ -2718,7 +3326,7 @@
 
                 {
                     title:
-                        "How Quality Manufacturing Improves Product Reliability",
+                        "Need for Automatic Power Factor Correction",
 
                     category:
                         "Manufacturing",
@@ -2730,73 +3338,84 @@
                         "images/article-quality-manufacturing.webp",
 
                     summary:
-                        "Understanding the importance of manufacturing quality, process consistency and reliable production standards.",
+                        "Understanding the importance of power factor correction.",
 
                     content: `
 
                         <p>
-                            Manufacturing quality plays an important role
-                            in determining the reliability and long-term
-                            performance of industrial products.
-                        </p>
+      Modern power networks cater to a wide variety of electrical and power
+      electronics loads, which create a varying power demand on the supply system.
+      In case of such varying loads, the power factor also varies as a function of the
+      load requirements. It therefore becomes practically difficult to maintain
+      consistent power factor by the use of fixed compensation i.e. fixed capacitors
+      which shall need to be manually switched to suit the variations of the load.
+      This will lead to situations where the installation can have a low power factor
+      leading to higher demand charges and levy of power factor penalties.
+    </p>
 
+    <p>
+      In addition to not being able to achieve the desired power factor it is also
+      possible that the use of fixed compensation can also result in leading power
+      factor under certain load conditions. This is also unhealthy for the installation
+      as it can result in over voltages, saturation of transformers, maloperation of
+      diesel generating sets, penalties by electricity supply authorities etc.
+    </p>
 
-                        <h2>
-                            Why Manufacturing Quality Matters
-                        </h2>
+    <p>
+      Consequently the use of fixed compensation has limitations in this context. It
+      is therefore necessary to automatically vary, without manual intervention, the
+      compensation to suit the load requirements.
+    </p>
 
+    <p>
+      This is achieved by using Intellect Automatic Power Factor Correction (APFC)
+      system which can ensure consistently high power factor without any manual
+      intervention. In addition, the occurrence of leading power factor will be
+      prevented.
+    </p>
 
-                        <p>
-                            Consistent manufacturing processes help ensure
-                            that products meet expected specifications
-                            across different production batches.
-                        </p>
+    <img
+                       src="images/article/panel6.jpg"
+                       alt=""
+                       loading="lazy"
+                   >
 
+    <h2>Intellect APFC products are fully automatic in operation and can be used to achieve:</h2>
 
-                        <h2>
-                            Process Consistency
-                        </h2>
+    <ul>
+      <li>Consistently high power factor under fluctuating load conditions</li>
+      <li>Elimination of low power factor penalty levied by electrical supply authorities</li>
+      <li>Reduced kVA demand charges</li>
+      <li>Lower energy consumption in the installation by reducing losses</li>
+      <li>Preventive leading power factor in an installation</li>
+    </ul>
 
+    <h2>The basic operations are as follows:</h2>
 
-                        <p>
-                            Standardised processes reduce variation and
-                            help manufacturers maintain predictable product
-                            quality.
-                        </p>
+    <ul>
+      <li>
+        To continuously sense and monitor the load condition by the use of external
+        CT (whose output is fed to the control relay)
+      </li>
+      <li>
+        To automatically switch ON and OFF relevant capacitor steps on to ensure
+        consistent power factor
+      </li>
+      <li>
+        To ensure easy user interface for enabling reliable understanding of system
+        operations carried outs etc.
+      </li>
+      <li>
+        To protect against any electrical faults in a manner that will ensure safe
+        isolation of the power factor correction equipment
+      </li>
+    </ul>
 
-
-                        <ul>
-
-                            <li>
-                                Consistent raw material selection
-                            </li>
-
-                            <li>
-                                Standardised production processes
-                            </li>
-
-                            <li>
-                                Regular quality inspection
-                            </li>
-
-                            <li>
-                                Proper documentation
-                            </li>
-
-                        </ul>
-
-
-                        <h2>
-                            Conclusion
-                        </h2>
-
-
-                        <p>
-                            A strong focus on quality throughout the
-                            manufacturing process ultimately helps
-                            businesses deliver more reliable products
-                            to their customers.
-                        </p>
+    <img
+                       src="images/article/panel4.jpg"
+                       alt=""
+                       loading="lazy"
+                   >
 
                     `
 
@@ -2805,7 +3424,7 @@
 
                 {
                     title:
-                        "Choosing the Right Industrial Components",
+                        "Principles of Power Factor correction",
 
                     category:
                         "Industry",
@@ -2817,49 +3436,129 @@
                         "images/article-industrial-components.webp",
 
                     summary:
-                        "Key factors businesses should consider when selecting industrial components and suppliers.",
+                        "A clear guide to understanding reactive energy, optimizing electrical power factor, reducing utility penalties, and improving equipment efficiency.",
 
                     content: `
 
                         <p>
-                            Selecting the right industrial component
-                            requires more than simply comparing prices.
-                            Businesses should consider quality,
-                            application requirements, consistency and
-                            supplier reliability.
-                        </p>
+      A vast majority of electrical loads in low voltage industrial installations are
+      inductive in nature. Typical examples are motors, transformers, drives &amp;
+      fluorescent lighting.
+    </p>
+
+    <p>
+      Such loads consume both active and reactive power. The active power is used
+      by the load to meet its real output requirements whereas reactive power is
+      used by the load to meet its magnetic field requirements.
+    </p>
 
 
-                        <h2>
-                            Understand the Application
-                        </h2>
 
+    <p>
+      Flow of active and reactive power always takes place in electrical installations.
+      This means that the supply system has to be capable of supplying both active and
+      reactive power. The supply of reactive power from the system results in reduced
+      Installation efficiency due to:
+    </p>
 
-                        <p>
-                            Begin by clearly defining the operating
-                            environment and performance requirements
-                            of the component.
-                        </p>
+    <ul>
+      <li>Increased current flow for a given load</li>
+      <li>Higher voltage drops in the system</li>
+      <li>Increase in losses of transformers, switchgear and cables</li>
+      <li>Higher kVA demand from supply system as given in figure 2</li>
+      <li>Higher electricity cost due to levy of penalties/loss of incentives</li>
+    </ul>
 
+    <p>
+      It is therefore necessary to reduce &amp; manage the flow of reactive power to achieve
+      higher efficiency of the electrical system and reduction in cost of electricity
+      consumed.
+    </p>
 
-                        <h2>
-                            Consider Total Cost
-                        </h2>
+    <p>
+      The most cost effective method of reducing and managing reactive power is by power
+      factor improvement through Intellect APFC System. The concept of reduction in kVA
+      demand from the system is shown in figure 3.
+    </p>
 
+    <p><strong>kVA</strong></p>
+    <p><strong>kW</strong></p>
+    <p><strong>kVAr</strong></p>
+    <p><strong>Load</strong> &nbsp;&nbsp; <strong>Load</strong></p>
+    <p><strong>Active Power</strong></p>
+    <p><strong>Reactive Power</strong></p>
+    <p><strong>Supply Bus</strong> &nbsp;&nbsp; <strong>Supply Bus</strong></p>
 
-                        <p>
-                            The lowest purchase price does not always
-                            represent the lowest overall cost. Product
-                            reliability, replacement frequency and
-                            downtime can have a significant impact.
-                        </p>
+    <h2>Intellect - Automatic Power Factor Control Panel</h2>
 
-
-                        <blockquote>
-                            The right component is the one that delivers
-                            the required performance consistently.
-                        </blockquote>
-
+    <table>
+      <tbody>
+        <tr>
+          <th>Power Range</th>
+          <td>25 kVAr, to 300 kVAr</td>
+        </tr>
+        <tr>
+          <th>Rated Voltage</th>
+          <td>440 V</td>
+        </tr>
+        <tr>
+          <th>Rated Frequency</th>
+          <td>50 H</td>
+        </tr>
+        <tr>
+          <th>Standards</th>
+          <td>IEC-61921</td>
+        </tr>
+        <tr>
+          <th>Power Supply</th>
+          <td>Three phase, four line</td>
+        </tr>
+        <tr>
+          <th>Relay current input signal</th>
+          <td>-- / 5A, from CT on line</td>
+        </tr>
+        <tr>
+          <th>Relay voltage input signal</th>
+          <td>Tapped internally</td>
+        </tr>
+        <tr>
+          <th>The Enclosure</th>
+          <td>
+            <ul>
+              <li>Basic structure is made of 1.2 mm sheet steel</li>
+              <li>Front door is made of 1.6 mm sheet steel</li>
+              <li>Mounting plate of components is of 2 mm</li>
+              <li>Internal components are accessible on opening the front door</li>
+              <li>Protection rating is IP42 / IP52</li>
+            </ul>
+          </td>
+        </tr>
+        <tr>
+          <th>Installation</th>
+          <td>
+            Indoor, wall/ Floor mounted, in a well ventilated non-dusty environment,
+            cable entry from bottom
+          </td>
+        </tr>
+        <tr>
+          <th>Incomer</th>
+          <td>
+            A four pole MCB, for 25 kVAr, and a three - pole MCCB, above 25 kVAr
+          </td>
+        </tr>
+        <tr>
+          <th>Capacitors</th>
+          <td>Cylindrical, dry type three phase units</td>
+        </tr>
+        <tr>
+          <th>The controller</th>
+          <td>
+            Microprocessor based relay with 4 / 6 out put contacts for switching contactors<br>
+            Having PF indication, built in time delays, and indication for CT reversal
+          </td>
+        </tr>
+      </tbody>
+    </table>
                     `
 
                 }
@@ -3529,6 +4228,582 @@
 
 
         /* ==============================================================
+           IMAGE GALLERY — CONTINUOUS CAROUSEL
+           ==============================================================
+
+           The track is rendered as three back-to-back copies of the
+           same photo set: [decorative][real][decorative].
+
+           The middle "real" copy is the only one exposed to keyboard
+           and screen-reader users — the leading/trailing copies exist
+           purely so the auto-scroll/swipe loop always has identical
+           -looking content just past either edge, which is what makes
+           it seamless. See initializeGalleryCarousel() for how the
+           loop itself is produced.
+           ============================================================== */
+
+        function createGalleryTileHTML(photo, index, isDecorative) {
+
+            return `
+
+                <button
+                    type="button"
+                    class="gallery-tile"
+                    data-gallery-index="${index}"
+                    ${isDecorative
+                        ? "tabindex=\"-1\" aria-hidden=\"true\""
+                        : `aria-label="View larger photo: ${escapeHTML(photo.alt)}"`}>
+
+                    <img
+                        src="${escapeHTML(photo.image)}"
+                        alt="${isDecorative ? "" : escapeHTML(photo.alt)}"
+                        loading="${index === 0 && !isDecorative ? "eager" : "lazy"}"
+                        decoding="async"
+                    >
+
+                    <span
+                        class="gallery-tile-overlay"
+                        aria-hidden="true">
+
+                        <span class="gallery-tile-label">
+                            View larger
+                        </span>
+
+                    </span>
+
+                </button>
+
+            `;
+
+        }
+
+
+        function renderGallery() {
+
+            const track =
+                document.getElementById(
+                    "galleryTrack"
+                );
+
+
+            const photos =
+                WEBSITE_CONFIG.gallery;
+
+
+            const realSetHTML =
+                photos
+                    .map(
+                        (photo, index) =>
+                            createGalleryTileHTML(
+                                photo,
+                                index,
+                                false
+                            )
+                    )
+                    .join("");
+
+
+            const decorativeSetHTML =
+                photos
+                    .map(
+                        (photo, index) =>
+                            createGalleryTileHTML(
+                                photo,
+                                index,
+                                true
+                            )
+                    )
+                    .join("");
+
+
+            /*
+                Order matters: a decorative copy before the real
+                tiles, and another after, so there is always
+                identical-looking content just beyond either edge.
+            */
+
+            track.innerHTML =
+                decorativeSetHTML +
+                realSetHTML +
+                decorativeSetHTML;
+
+        }
+
+
+        /* ==============================================================
+           GALLERY CAROUSEL — CONTINUOUS AUTO-SCROLL, ARROWS & LOOP
+           ==============================================================
+
+           The carousel runs on every screen size:
+
+           1. AUTO-SCROLL — a requestAnimationFrame loop nudges
+              scrollLeft forward at a slow, constant speed, which is
+              what gives the "continuous marquee" motion while still
+              leaving the element a genuinely scrollable one (so a
+              swipe, mouse wheel, or the arrow buttons all just work).
+
+           2. INFINITE LOOP — the track holds three equal-width
+              copies of the photo set. Whenever the visible position
+              (moved by auto-scroll OR by the user) drifts into the
+              leading/trailing clone copy, scrollLeft is silently
+              shifted by exactly one copy's width. Every copy is
+              identical, so the shift is invisible.
+
+           3. PAUSE ON INTERACTION — a pointer press, a touch, a
+              mouse hover, or focusing a tile/arrow pauses the
+              auto-scroll immediately. It resumes automatically a
+              short moment after the interaction (and any resulting
+              scroll/momentum) has fully settled.
+
+           4. ARROWS — the left/right buttons scroll roughly one
+              viewport's worth of tiles with a smooth, fast scroll,
+              for visitors who want to move through the gallery
+              deliberately rather than waiting on the automatic pace.
+           ============================================================== */
+
+        function initializeGalleryCarousel() {
+
+            const wrapper =
+                document.getElementById(
+                    "galleryGrid"
+                );
+
+            const track =
+                document.getElementById(
+                    "galleryTrack"
+                );
+
+            const prevButton =
+                document.getElementById(
+                    "galleryPrev"
+                );
+
+            const nextButton =
+                document.getElementById(
+                    "galleryNext"
+                );
+
+            const reducedMotionQuery =
+                window.matchMedia(
+                    "(prefers-reduced-motion: reduce)"
+                );
+
+
+            const AUTO_SCROLL_SPEED = 40;
+
+            const RESUME_DELAY_MS = 600;
+
+
+            let setWidth = 0;
+
+            let isPaused = false;
+
+            let interactionActive = false;
+
+            let resumeTimer = null;
+
+            let lastFrameTime = null;
+
+            let rafId = null;
+
+
+            /*
+                ------------------------------------------------------
+                INFINITE LOOP SETUP
+                ------------------------------------------------------
+            */
+
+            function recalculateSetWidth() {
+
+                setWidth =
+                    track.scrollWidth / 3;
+
+                wrapper.scrollLeft =
+                    setWidth;
+
+            }
+
+
+            wrapper.addEventListener(
+                "scroll",
+                function() {
+
+                    if (!setWidth) {
+                        return;
+                    }
+
+
+                    if (wrapper.scrollLeft < setWidth * 0.5) {
+
+                        wrapper.scrollLeft += setWidth;
+
+                    } else if (wrapper.scrollLeft > setWidth * 1.5) {
+
+                        wrapper.scrollLeft -= setWidth;
+
+                    }
+
+
+                    /*
+                        Keep extending the "quiet period" for as long
+                        as scroll positions keep changing (covers
+                        touch momentum continuing after the finger
+                        has already lifted).
+                    */
+
+                    if (isPaused) {
+                        scheduleResume();
+                    }
+
+                },
+                { passive: true }
+            );
+
+
+            let resizeTimer;
+
+            window.addEventListener(
+                "resize",
+                function() {
+
+                    clearTimeout(resizeTimer);
+
+                    resizeTimer =
+                        setTimeout(
+                            recalculateSetWidth,
+                            150
+                        );
+
+                }
+            );
+
+            window.addEventListener(
+                "load",
+                recalculateSetWidth
+            );
+
+            recalculateSetWidth();
+
+
+            /*
+                ------------------------------------------------------
+                PAUSE / RESUME ON INTERACTION
+                ------------------------------------------------------
+            */
+
+            function setPaused(paused) {
+
+                isPaused = paused;
+
+                wrapper.classList.toggle(
+                    "snap-enabled",
+                    paused
+                );
+
+            }
+
+
+            function pauseForInteraction() {
+
+                interactionActive = true;
+
+                clearTimeout(resumeTimer);
+
+                setPaused(true);
+
+            }
+
+
+            function scheduleResume() {
+
+                clearTimeout(resumeTimer);
+
+                resumeTimer =
+                    setTimeout(
+                        function() {
+
+                            if (!interactionActive) {
+                                setPaused(false);
+                            }
+
+                        },
+                        RESUME_DELAY_MS
+                    );
+
+            }
+
+
+            function endInteraction() {
+
+                interactionActive = false;
+
+                scheduleResume();
+
+            }
+
+
+            wrapper.addEventListener("pointerdown", pauseForInteraction);
+            wrapper.addEventListener("touchstart", pauseForInteraction, { passive: true });
+            wrapper.addEventListener("mouseenter", pauseForInteraction);
+            wrapper.addEventListener("focusin", pauseForInteraction);
+
+            wrapper.addEventListener("pointerup", endInteraction);
+            wrapper.addEventListener("pointercancel", endInteraction);
+            wrapper.addEventListener("touchend", endInteraction, { passive: true });
+            wrapper.addEventListener("mouseleave", endInteraction);
+            wrapper.addEventListener("focusout", endInteraction);
+
+
+            /*
+                ------------------------------------------------------
+                AUTO-SCROLL LOOP
+                ------------------------------------------------------
+            */
+
+            function tick(timestamp) {
+
+                if (lastFrameTime === null) {
+                    lastFrameTime = timestamp;
+                }
+
+                const elapsedSeconds =
+                    (timestamp - lastFrameTime) / 1000;
+
+                lastFrameTime = timestamp;
+
+
+                if (!isPaused && !reducedMotionQuery.matches) {
+
+                    wrapper.scrollLeft +=
+                        AUTO_SCROLL_SPEED * elapsedSeconds;
+
+                }
+
+
+                rafId =
+                    window.requestAnimationFrame(tick);
+
+            }
+
+
+            rafId =
+                window.requestAnimationFrame(tick);
+
+
+            /*
+                ------------------------------------------------------
+                ARROW CONTROLS
+                ------------------------------------------------------
+            */
+
+            function scrollByArrow(direction) {
+
+                pauseForInteraction();
+
+                wrapper.scrollBy({
+                    left: direction * wrapper.clientWidth * 0.85,
+                    behavior: "smooth"
+                });
+
+                endInteraction();
+
+            }
+
+
+            prevButton.addEventListener(
+                "click",
+                function() {
+                    scrollByArrow(-1);
+                }
+            );
+
+            nextButton.addEventListener(
+                "click",
+                function() {
+                    scrollByArrow(1);
+                }
+            );
+
+        }
+
+
+        /* ==============================================================
+           GALLERY LIGHTBOX
+           ==============================================================
+
+           Opens a single shared modal showing an enlarged version of
+           whichever gallery photo was activated.
+
+           Closes on: the close button, clicking the dark backdrop,
+           or pressing Escape. Focus moves to the close button while
+           open and returns to the tile that opened it afterwards.
+           ============================================================== */
+
+        let galleryLastFocusedElement = null;
+
+
+        function openLightbox(index) {
+
+            const photo =
+                WEBSITE_CONFIG.gallery[index];
+
+
+            if (!photo) {
+                return;
+            }
+
+
+            galleryLastFocusedElement =
+                document.activeElement;
+
+
+            const image =
+                document.getElementById(
+                    "lightboxImage"
+                );
+
+            image.src =
+                photo.image;
+
+            image.alt =
+                photo.alt;
+
+
+            document.getElementById(
+                "lightboxCaption"
+            ).textContent =
+                photo.alt;
+
+
+            const lightbox =
+                document.getElementById(
+                    "galleryLightbox"
+                );
+
+            lightbox.classList.add(
+                "active"
+            );
+
+            lightbox.setAttribute(
+                "aria-hidden",
+                "false"
+            );
+
+
+            document.body.style.overflow =
+                "hidden";
+
+
+            document.getElementById(
+                "lightboxClose"
+            ).focus();
+
+        }
+
+
+        function closeLightbox() {
+
+            const lightbox =
+                document.getElementById(
+                    "galleryLightbox"
+                );
+
+            lightbox.classList.remove(
+                "active"
+            );
+
+            lightbox.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+
+            document.body.style.overflow =
+                "";
+
+
+            if (galleryLastFocusedElement) {
+
+                galleryLastFocusedElement.focus();
+
+                galleryLastFocusedElement = null;
+
+            }
+
+        }
+
+
+        function initializeGalleryLightbox() {
+
+            document.getElementById(
+                "galleryGrid"
+            ).addEventListener(
+                "click",
+                function(event) {
+
+                    const tile =
+                        event.target.closest(
+                            "[data-gallery-index]"
+                        );
+
+
+                    if (!tile) {
+                        return;
+                    }
+
+
+                    openLightbox(
+                        Number(
+                            tile.dataset.galleryIndex
+                        )
+                    );
+
+                }
+            );
+
+
+            document.getElementById(
+                "lightboxClose"
+            ).addEventListener(
+                "click",
+                closeLightbox
+            );
+
+
+            document.getElementById(
+                "galleryLightbox"
+            ).addEventListener(
+                "click",
+                function(event) {
+
+                    if (event.target.id === "galleryLightbox") {
+                        closeLightbox();
+                    }
+
+                }
+            );
+
+
+            document.addEventListener(
+                "keydown",
+                function(event) {
+
+                    if (
+                        event.key === "Escape" &&
+                        document
+                            .getElementById("galleryLightbox")
+                            .classList.contains("active")
+                    ) {
+                        closeLightbox();
+                    }
+
+                }
+            );
+
+        }
+
+
+        /* ==============================================================
            ARTICLE LIST
            ============================================================== */
 
@@ -3910,6 +5185,12 @@
             initializeProductFilters();
 
             renderProducts();
+
+            renderGallery();
+
+            initializeGalleryLightbox();
+
+            initializeGalleryCarousel();
 
             renderArticles();
 
